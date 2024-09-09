@@ -1,11 +1,13 @@
 from flask import Flask
+from api.routes import appbp
+from api.models import db
 
 app = Flask(__name__)
+app.config.from_object('api.config.Config')
 
-@app.route('/')
-def home():
-    return 'Hello, World!'
+db.init_app(app)
 
-@app.route('/about')
-def about():
-    return 'About'
+with app.app_context():
+    app.register_blueprint(appbp)
+    db.create_all()
+
