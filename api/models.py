@@ -1,4 +1,5 @@
-from index import db
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy()
 
 class Category(db.Model):
     __tablename__ = 'Category'
