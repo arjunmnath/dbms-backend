@@ -1,149 +1,155 @@
 from flask import request, jsonify
+from flask_restful import Resource, Api
 from api.models import db, Category, Product, ProductImage, CatProd
 from sqlalchemy.exc import IntegrityError
 from . import appbp
 
-# Post a new product
-@appbp.route('/api/products', methods=['POST']) #working fine
-def create_product():
-    data = request.get_json()
-    try:
-        new_product = Product(
-            title=data['title'],
-            description=data['description'],
-            condition=data['condition'],
-            initialBid=data['initialBid'],
-            status=data['status'],
-            startTime=data['startTime'],
-            endTime=data['endTime'],
-            userId=data['userId']
-        )
-        
-        categoryId = data['categoryId']
+# Initialize Flask-RESTful API
+api = Api(appbp)
 
-        # Fetch the category by ID to ensure it exists
-        category = Category.query.get_or_404(categoryId)
+# Resource for managing a single product
+class ProductResource(Resource):
+    def get(self, product_id):
+        try:
+            product = Product.query.get_or_404(product_id)
+            product_data = {
+                'productId': product.productId,
+                'title': product.title,
+                'description': product.description,
+                'condition': product.condition,
+                'initialBid': float(product.initialBid),
+                'currentBidPrice': float(product.currentBidPrice),
+                'status': product.status,
+                'startTime': product.startTime.isoformat(),
+                'endTime': product.endTime.isoformat(),
+                'images': [{'imageURL': img.imageURL} for img in product.product_imgs]
+            }
+            return jsonify(product_data)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
-        db.session.add(new_product)
-        db.session.commit()
+    def put(self, product_id):
+        data = request.get_json()
+        try:
+            product = Product.query.get_or_404(product_id)
+            
+            product.title = data.get('title', product.title)
+            product.description = data.get('description', product.description)
+            product.condition = data.get('condition', product.condition)
+            product.initialBid = data.get('initialBid', product.initialBid)
+            product.status = data.get('status', product.status)
+            product.startTime = data.get('startTime', product.startTime)
+            product.endTime = data.get('endTime', product.endTime)
 
-        # Associate the product with the category
-        CatProd_entry = CatProd(categoryId=categoryId, productId=new_product.productId)
-        db.session.add(CatProd_entry)
-        db.session.commit()
+            # Update product images if provided
+            if 'images' in data:
+                ProductImage.query.filter_by(productId=product.productId).delete()
+                for image_url in data['images']:
+                    new_product_img = ProductImage(productId=product.productId, imageURL=image_url)
+                    db.session.add(new_product_img)
 
-        # Optionally handle product images if provided
-        if 'images' in data:
-            for image_url in data['images']:
-                new_product_img = ProductImage(productId=new_product.productId, imageURL=image_url)
-                db.session.add(new_product_img)
+            db.session.commit()
+            return jsonify({'message': 'Product updated successfully'}), 200
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'error': 'Error updating product'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    def delete(self, product_id):
+        try:
+            product = Product.query.get_or_404(product_id)
+            db.session.delete(product)
+            db.session.commit()
+            return jsonify({'message': 'Product deleted successfully'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+# Resource for managing product collections
+class ProductListResource(Resource):
+    def get(self):
+        try:
+            products = Product.query.filter_by(status='active').all()
+            products_list = [
+                {
+                    'productId': p.productId,
+                    'title': p.title,
+                    'description': p.description,
+                    'initialBid': float(p.initialBid),
+                    'currentBidPrice': float(p.currentBidPrice),
+                    'startTime': p.startTime.isoformat(),
+                    'endTime': p.endTime.isoformat(),
+                    'images': [{'imageURL': img.imageURL} for img in p.product_imgs]
+                } for p in products
+            ]
+            return jsonify(products_list)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    def post(self):
+        data = request.get_json()
+        try:
+            new_product = Product(
+                title=data['title'],
+                description=data['description'],
+                condition=data['condition'],
+                initialBid=data['initialBid'],
+                status=data['status'],
+                startTime=data['startTime'],
+                endTime=data['endTime'],
+                userId=data['userId']
+            )
+            
+            categoryId = data['categoryId']
+            category = Category.query.get_or_404(categoryId)
+
+            db.session.add(new_product)
             db.session.commit()
 
-        return jsonify({'message': 'Product created successfully'}), 201
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({'error': 'Error creating product'}), 400
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            CatProd_entry = CatProd(categoryId=categoryId, productId=new_product.productId)
+            db.session.add(CatProd_entry)
+            db.session.commit()
 
-# Fetch products by category
-@appbp.route('/api/categories/<int:category_id>/products', methods=['GET'])
-def get_products_by_category(category_id):
-    try:
-        # Fetch the category with the given ID
-        category = Category.query.get_or_404(category_id)
-        
-        # Fetch products associated with the category
-        products = db.session.query(Product).join(CatProd).filter(CatProd.c.categoryId == category_id).all()
-        
-        # Prepare response data
-        products_list = [
-            {
-                'productId': p.productId,
-                'title': p.title,
-                'description': p.description,
-                'condition': p.condition,
-                'initialBid': float(p.initialBid),
-                'currentBidPrice': float(p.currentBidPrice),
-                'status': p.status,
-                'startTime': p.startTime.isoformat(),
-                'endTime': p.endTime.isoformat(),
-                'images': [{'imageURL': img.imageURL} for img in p.product_imgs]
-            } for p in products
-        ]
-        
-        return jsonify(products_list)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-# Fetch products by category name
-@appbp.route('/api/categories/name/<string:category_name>/products', methods=['GET'])
-def get_products_by_category_name(category_name):
-    try:
-        # Fetch the category with the given name
-        category = Category.query.filter_by(categoryName=category_name).first_or_404()
-        
-        # Fetch products associated with the category
-        products = db.session.query(Product).join(CatProd).filter(CatProd.c.categoryId == category.categoryId).all()
-        
-        # Prepare response data
-        products_list = [
-            {
-                'productId': p.productId,
-                'title': p.title,
-                'description': p.description,
-                'condition': p.condition,
-                'initialBid': float(p.initialBid),
-                'currentBidPrice': float(p.currentBidPrice),
-                'status': p.status,
-                'startTime': p.startTime.isoformat(),
-                'endTime': p.endTime.isoformat(),
-                'images': [{'imageURL': img.imageURL} for img in p.product_imgs]
-            } for p in products
-        ]
-        
-        return jsonify(products_list)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            if 'images' in data:
+                for image_url in data['images']:
+                    new_product_img = ProductImage(productId=new_product.productId, imageURL=image_url)
+                    db.session.add(new_product_img)
+                db.session.commit()
 
-# Fetch all active products
-@appbp.route('/api/products', methods=['GET'])
-def get_products():
-    try:
-        products = Product.query.filter_by(status='active').all()
-        products_list = [
-            {
-                'productId': p.productId,
-                'title': p.title,
-                'description': p.description,
-                'initialBid': float(p.initialBid),
-                'currentBidPrice': float(p.currentBidPrice),
-                'startTime': p.startTime.isoformat(),
-                'endTime': p.endTime.isoformat(),
-                'images': [{'imageURL': img.imageURL} for img in p.product_imgs]
-            } for p in products
-        ]
-        return jsonify(products_list)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            return jsonify({'message': 'Product created successfully'}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'error': 'Error creating product'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
-# Fetch a single product by ID
-@appbp.route('/api/products/<int:product_id>', methods=['GET'])
-def get_product(product_id):
-    try:
-        product = Product.query.get_or_404(product_id)
-        product_data = {
-            'productId': product.productId,
-            'title': product.title,
-            'description': product.description,
-            'condition': product.condition,
-            'initialBid': float(product.initialBid),
-            'currentBidPrice': float(product.currentBidPrice),
-            'status': product.status,
-            'startTime': product.startTime.isoformat(),
-            'endTime': product.endTime.isoformat(),
-            'images': [{'imageURL': img.imageURL} for img in product.product_imgs]
-        }
-        return jsonify(product_data)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+
+# Resource for managing products by category
+class CategoryProductsResource(Resource):
+    def get(self, category_id):
+        try:
+            products = db.session.query(Product).join(CatProd).filter(CatProd.c.categoryId == category_id).all()
+            products_list = [
+                {
+                    'productId': p.productId,
+                    'title': p.title,
+                    'description': p.description,
+                    'condition': p.condition,
+                    'initialBid': float(p.initialBid),
+                    'currentBidPrice': float(p.currentBidPrice),
+                    'status': p.status,
+                    'startTime': p.startTime.isoformat(),
+                    'endTime': p.endTime.isoformat(),
+                    'images': [{'imageURL': img.imageURL} for img in p.product_imgs]
+                } for p in products
+            ]
+            return jsonify(products_list)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+# Register resources with the API
+api.add_resource(ProductResource, '/api/v2/products/<int:product_id>')
+api.add_resource(ProductListResource, '/api/v2/products')
+api.add_resource(CategoryProductsResource, '/api/v2/categories/<int:category_id>/products')
