@@ -11,9 +11,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
 db.init_app(app)
 
-@app.route('/')
-def home():
-    return app.config['SQLALCHEMY_DATABASE_URI']
 
 try:
     with app.app_context():
