@@ -102,7 +102,7 @@ class UserDetails(Resource):
             user.phone = data.get('phone', user.phone)
             user.firstName = data.get('firstName', user.firstName)
             user.lastName = data.get('lastName', user.lastName)
-            user.houseFlatNo = data.get('house_flatNo', user.houseFlatNo)
+            user.houseFlatNo = data.get('houseFlatNo', user.houseFlatNo)
             user.street = data.get('street', user.street)
             user.city = data.get('city', user.city)
             user.pincode = data.get('pincode', user.pincode)
