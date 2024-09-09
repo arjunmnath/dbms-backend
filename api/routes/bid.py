@@ -2,7 +2,7 @@ from flask import request, jsonify
 from flask_restful import Resource
 from api.models import db, Bid
 from sqlalchemy.exc import IntegrityError
-from . import api
+from api.routes import api
 
 # Create an instance of Api
 
