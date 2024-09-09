@@ -7,19 +7,16 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
 
-    try:
-        db.init_app(app)
-    except Exception as e:
-        print(f"Error initializing database: {e}")
+    db.init_app(app)
 
     with app.app_context():
         # from routes import register_blueprints
-        import routes
-        routes.register_blueprints(app)
-        try:
-            db.create_all()
-        except Exception as e:
-            print(f"Error creating tables: {e}")
+        from routes import appbp
+        # routes.register_blueprints(app)
+        app.register_blueprint(appbp)
+
+        db.create_all()
+        
 
     return app
 

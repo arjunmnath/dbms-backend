@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from models import db, Messages
 from sqlalchemy.exc import IntegrityError
 from . import appbp
