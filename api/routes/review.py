@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from models import db, Review
+from api.models import db, Review
 from sqlalchemy.exc import IntegrityError
 from . import appbp
 

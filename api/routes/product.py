@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from models import db, Category, Product, ProductImage, CatProd
+from api.models import db, Category, Product, ProductImage, CatProd
 from sqlalchemy.exc import IntegrityError
 from . import appbp
 
