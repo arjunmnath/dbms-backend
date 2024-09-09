@@ -10,7 +10,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
 db.init_app(app)
-with app.app_context():
-    app.register_blueprint(appbp)
-    db.create_all()
 
+
+try:
+    with app.app_context():
+        app.register_blueprint(appbp)
+        db.create_all()
+except Exception as e:
+    print('db.create_all() errored out')
