@@ -2,7 +2,7 @@ from flask import request, jsonify
 from flask_restful import Resource
 from api.models import db, Category, Product, ProductImage, CatProd
 from sqlalchemy.exc import IntegrityError
-from . import api
+from api.routes import api
 
 # Resource for managing a single product
 class ProductResource(Resource):
