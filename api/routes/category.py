@@ -1,11 +1,8 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource
 from api.models import db, Category
 from sqlalchemy.exc import IntegrityError
-from . import appbp
-
-# Create an instance of Api
-api = Api(appbp)
+from . import api
 
 class CategoryResource(Resource):
     def post(self):

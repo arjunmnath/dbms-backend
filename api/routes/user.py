@@ -1,11 +1,9 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource
 from api.models import db, User
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import appbp
-
-api = Api(appbp)  # Initialize Flask-RESTful API with your Blueprint
+from . import api
 
 # User Registration Resource
 class UserRegistration(Resource):

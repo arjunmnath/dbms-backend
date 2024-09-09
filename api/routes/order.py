@@ -1,11 +1,8 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource
 from api.models import db, Order
 from sqlalchemy.exc import IntegrityError
-from . import appbp
-
-# Initialize Flask-RESTful API
-api = Api(appbp)
+from . import api
 
 # Resource for managing user orders
 class UserOrdersResource(Resource):

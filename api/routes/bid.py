@@ -1,11 +1,11 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource
 from api.models import db, Bid
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from . import api
 
 # Create an instance of Api
-api = Api(appbp)
+
 
 class BidResource(Resource):
     def post(self):
