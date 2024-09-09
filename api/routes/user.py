@@ -3,7 +3,7 @@ from flask_restful import Resource
 from api.models import db, User
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import api
+from api.routes import api
 
 # User Registration Resource
 class UserRegistration(Resource):
