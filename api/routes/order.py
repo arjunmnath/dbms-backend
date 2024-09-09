@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Order
+from api.models import db, Order
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 # Get orders for a user
 @appbp.route('/api/users/<int:user_id>/orders', methods=['GET'])

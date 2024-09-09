@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Category, Product, ProductImage, CatProd
+from api.models import db, Category, Product, ProductImage, CatProd
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 # Post a new product
 @appbp.route('/api/products', methods=['POST']) #working fine

@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Category
+from api.models import db, Category
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 #Creates new category
 @appbp.route('/api/categories', methods=['POST']) #working fine

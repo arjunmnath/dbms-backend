@@ -1,8 +1,8 @@
 from flask import request, jsonify
-from models import db, User
+from api.models import db, User
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import appbp
+from api.routes import appbp
 
 # Register a user
 @appbp.route('/api/register', methods=['POST']) #working fine

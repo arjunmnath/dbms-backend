@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Messages
+from api.models import db, Messages
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 # Send a message
 @appbp.route('/api/messages', methods=['POST']) #working fine

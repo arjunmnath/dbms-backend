@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Bid
+from api.models import db, Bid
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 # Create a new bid
 @appbp.route('/api/bids', methods=['POST']) #working fine

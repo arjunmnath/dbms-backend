@@ -1,7 +1,7 @@
 from flask import request, jsonify
-from models import db, Review
+from api.models import db, Review
 from sqlalchemy.exc import IntegrityError
-from . import appbp
+from api.routes import appbp
 
 # Write a new review for a product
 @appbp.route('/api/reviews', methods=['POST']) #working fine
