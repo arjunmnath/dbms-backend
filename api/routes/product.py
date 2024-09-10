@@ -76,6 +76,45 @@ class ProductResource(Resource):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+#Create new product
+class ProductCreateResource(Resource):
+    def post(self):
+        data = request.get_json()
+        try:
+            new_product = Product(
+                title=data['title'],
+                description=data['description'],
+                condition=data['condition'],
+                initialBid=data['initialBid'],
+                status=data['status'],
+                startTime=data['startTime'],
+                endTime=data['endTime'],
+                userId=data['userId']
+            )
+            
+            categoryId = data['categoryId']
+            category = Category.query.get_or_404(categoryId)
+
+            db.session.add(new_product)
+            db.session.commit()
+
+            CatProd_entry = CatProd(categoryId=categoryId, productId=new_product.productId)
+            db.session.add(CatProd_entry)
+            db.session.commit()
+
+            if 'images' in data:
+                for image_url in data['images']:
+                    new_product_img = ProductImage(productId=new_product.productId, imageURL=image_url)
+                    db.session.add(new_product_img)
+                db.session.commit()
+
+            return jsonify({'message': 'Product created successfully'}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'error': 'Error creating product'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
 # Resource for listing products with optional filters
 class ProductListResource(Resource):
     def get(self):
@@ -114,43 +153,6 @@ class ProductListResource(Resource):
                 } for p in products
             ]
             return jsonify(products_list)
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    def post(self):
-        data = request.get_json()
-        try:
-            new_product = Product(
-                title=data['title'],
-                description=data['description'],
-                condition=data['condition'],
-                initialBid=data['initialBid'],
-                status=data['status'],
-                startTime=data['startTime'],
-                endTime=data['endTime'],
-                userId=data['userId']
-            )
-            
-            categoryId = data['categoryId']
-            category = Category.query.get_or_404(categoryId)
-
-            db.session.add(new_product)
-            db.session.commit()
-
-            CatProd_entry = CatProd(categoryId=categoryId, productId=new_product.productId)
-            db.session.add(CatProd_entry)
-            db.session.commit()
-
-            if 'images' in data:
-                for image_url in data['images']:
-                    new_product_img = ProductImage(productId=new_product.productId, imageURL=image_url)
-                    db.session.add(new_product_img)
-                db.session.commit()
-
-            return jsonify({'message': 'Product created successfully'}), 201
-        except IntegrityError:
-            db.session.rollback()
-            return jsonify({'error': 'Error creating product'}), 400
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
@@ -234,9 +236,9 @@ class TrendingProducts(Resource):
         return jsonify(response)
 
 # Register resources with the API
-api.add_resource(ProductResource, '/api/v2/products/product')   #?id=2  
-api.add_resource(ProductListResource, '/api/v2/products')   #?status=active&limit=5 gives products of status specified
-                                                            #POST for creating product
-api.add_resource(CategoryProductsResource, '/api/v2/categories/products')   #?category_id=2&sort_by=currentBidPrice&sort_order=desc
-                                                                            #?category_id=2&sort_by=startTime&sort_order=asc&limit=10
-api.add_resource(TrendingProducts, '/api/products/trending')    #?limit=5
+api.add_resource(ProductResource, '/api/v2/products/product')   #id
+api.add_resource(ProductListResource, '/api/v2/products')   #status,limit for getting list of products of specified status
+api.add_resource(ProductCreateResource, '/api/v2/products/create')    #POST for creating product
+api.add_resource(CategoryProductsResource, '/api/v2/categories/products')   #category_id, sort_by=currentBidPrice, sort_order=desc (default asc)
+                                                                            #limit, status
+api.add_resource(TrendingProducts, '/api/products/trending')    #limit
