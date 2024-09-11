@@ -3,9 +3,6 @@ from flask import Flask
 from api.routes import appbp
 from api.models import db
 import pymysql
-import dotenv
-
-dotenv.load_dotenv()
 
 pymysql.install_as_MySQLdb()
 
