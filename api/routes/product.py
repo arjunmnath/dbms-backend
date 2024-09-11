@@ -207,9 +207,9 @@ class CategoryProductsResource(Resource):
         except SQLAlchemyError as e:
             # Handle SQLAlchemy-specific exceptions
             return {'error': str(e)}, 500
-        # except Exception as e:
+        except Exception as e:
             # Handle general exceptions
-            # return {'error': str(e)}, 500
+            return {'error': str(e)}, 500
         
 class TrendingProducts(Resource):
     def get(self):
