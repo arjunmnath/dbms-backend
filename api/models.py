@@ -6,6 +6,8 @@ class Category(db.Model):
     categoryId = db.Column(db.Integer, primary_key=True)
     categoryName = db.Column(db.String(255), nullable=False)
 
+    products = db.relationship('Product', secondary='Cat_Prod', backref=db.backref('categories', lazy=True))
+
 class User(db.Model):
     __tablename__ = 'User'
     userId = db.Column(db.Integer, primary_key=True)
@@ -22,11 +24,12 @@ class User(db.Model):
     dateJoined = db.Column(db.DateTime, nullable=False)
     isVerified = db.Column(db.Boolean, default=False)
 
-    products = db.relationship('Product', backref='owner', lazy=True)
+    listed_products = db.relationship('Product', backref='product_owner', lazy=True, cascade='all, delete-orphan')
     bids = db.relationship('Bid', backref='bidder', lazy=True)
-    reviews = db.relationship('Review', backref='reviewer', lazy=True)
-    messages_sent = db.relationship('Messages', foreign_keys='Messages.sellerId', backref='seller', lazy=True)
-    messages_received = db.relationship('Messages', foreign_keys='Messages.receiverId', backref='receiver', lazy=True)
+    reviews = db.relationship('Review', backref='reviewer', lazy=True, cascade='all, delete-orphan')
+    messages_sent = db.relationship('Messages', foreign_keys='Messages.sellerId', backref='seller', lazy=True, cascade='all, delete-orphan')
+    messages_received = db.relationship('Messages', foreign_keys='Messages.receiverId', backref='receiver', lazy=True, cascade='all, delete-orphan')
+    orders = db.relationship('Order', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class Product(db.Model):
     __tablename__ = 'Product'
@@ -41,10 +44,11 @@ class Product(db.Model):
     endTime = db.Column(db.DateTime, nullable=False)
     userId = db.Column(db.Integer, db.ForeignKey('User.userId'), nullable=False)
 
-    images = db.relationship('ProductImage', backref='product', lazy=True)
-    bids = db.relationship('Bid', backref='product', lazy=True)
-    reviews = db.relationship('Review', backref='product', lazy=True)
-    category = db.relationship('Category', secondary='Cat_Prod', lazy='subquery', backref=db.backref('products', lazy=True))
+    images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
+    bids = db.relationship('Bid', backref='product', lazy=True, cascade='all, delete-orphan')
+    reviews = db.relationship('Review', backref='product', lazy=True, cascade='all, delete-orphan')
+    orders = db.relationship('Order', backref='product', lazy=True)
+    messages = db.relationship('Messages', backref='product', lazy=True, cascade='all, delete-orphan')
 
 class ProductImage(db.Model):
     __tablename__ = 'Product_img'
@@ -78,6 +82,8 @@ class Order(db.Model):
     transactionId = db.Column(db.String(255))
     userId = db.Column(db.Integer, db.ForeignKey('User.userId'), nullable=False)
     productId = db.Column(db.Integer, db.ForeignKey('Product.productId'), nullable=False)
+
+    shipment = db.relationship('Shipment', backref='order', uselist=False, cascade='all, delete-orphan')
 
 class Shipment(db.Model):
     __tablename__ = 'Shipment'
