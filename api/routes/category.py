@@ -1,101 +1,120 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from api.models import db, Category
-from sqlalchemy.exc import IntegrityError
+from api.models import create_connection
+from mysql.connector import Error
 from api.routes import api
 
 class CategoryResource(Resource):
     def post(self):
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
             # Get JSON data from the request
             data = request.get_json()
-            
-            # Extract category name
-            category_name = data['categoryName']
+            category_name = data.get('categoryName')
+
+            if not category_name:
+                return {'error': 'categoryName is required'}, 400
             
             # Check if the category already exists
-            existing_category = Category.query.filter_by(categoryName=category_name).first()
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM categories WHERE categoryName = %s", (category_name,))
+            existing_category = cursor.fetchone()
             if existing_category:
                 return {'message': 'Category already exists'}, 400
             
-            # Create a new category instance
-            new_category = Category(categoryName=category_name)
-            
-            # Add the new category to the database
-            db.session.add(new_category)
-            db.session.commit()
-            
-            # Return success response
-            return {'message': 'Category added successfully', 'categoryId': new_category.categoryId}, 201
-        except IntegrityError:
-            db.session.rollback()
-            return {'error': 'Invalid data'}, 400
-        except Exception as e:
+            # Insert a new category
+            cursor.execute("INSERT INTO categories (categoryName) VALUES (%s)", (category_name,))
+            connection.commit()
+            return jsonify({'message': 'Category added successfully', 'categoryId': cursor.lastrowid}), 201
+        except Error as e:
             return {'error': str(e)}, 500
+        finally:
+            cursor.close()
+            connection.close()
 
     def get(self):
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            # Fetch all categories from the database
-            categories = Category.query.all()
-            
-            # Prepare response data
-            categories_list = [
-                {
-                    'categoryId': c.categoryId,
-                    'categoryName': c.categoryName
-                } for c in categories
-            ]
-            
-            return categories_list
-        except Exception as e:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM categories")
+            categories = cursor.fetchall()
+            return jsonify(categories), 200
+        except Error as e:
             return {'error': str(e)}, 500
+        finally:
+            cursor.close()
+            connection.close()
 
 class CategoryDetailResource(Resource):
     def get(self, category_id):
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            # Fetch the category by ID
-            category = Category.query.get_or_404(category_id)
-            
-            return {
-                'categoryId': category.categoryId,
-                'categoryName': category.categoryName
-            }
-        except Exception as e:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM categories WHERE categoryId = %s", (category_id,))
+            category = cursor.fetchone()
+            if not category:
+                return {'error': 'Category not found'}, 404
+            return jsonify(category), 200
+        except Error as e:
             return {'error': str(e)}, 500
+        finally:
+            cursor.close()
+            connection.close()
 
     def put(self, category_id):
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            # Get JSON data from the request
             data = request.get_json()
+            category_name = data.get('categoryName')
+
+            if not category_name:
+                return {'error': 'categoryName is required'}, 400
             
-            # Fetch the category by ID
-            category = Category.query.get_or_404(category_id)
+            cursor = connection.cursor()
+            cursor.execute("UPDATE categories SET categoryName = %s WHERE categoryId = %s", (category_name, category_id))
+            connection.commit()
+
+            if cursor.rowcount == 0:
+                return {'error': 'Category not found'}, 404
             
-            # Update category name
-            category.categoryName = data.get('categoryName', category.categoryName)
-            
-            # Commit the changes
-            db.session.commit()
-            
-            return {'message': 'Category updated successfully'}
-        except IntegrityError:
-            db.session.rollback()
-            return {'error': 'Invalid data'}, 400
-        except Exception as e:
+            return {'message': 'Category updated successfully'}, 200
+        except Error as e:
             return {'error': str(e)}, 500
+        finally:
+            cursor.close()
+            connection.close()
 
     def delete(self, category_id):
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            # Fetch the category by ID
-            category = Category.query.get_or_404(category_id)
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM categories WHERE categoryId = %s", (category_id,))
+            connection.commit()
+
+            if cursor.rowcount == 0:
+                return {'error': 'Category not found'}, 404
             
-            # Delete the category
-            db.session.delete(category)
-            db.session.commit()
-            
-            return {'message': 'Category deleted successfully'}
-        except Exception as e:
+            return {'message': 'Category deleted successfully'}, 200
+        except Error as e:
             return {'error': str(e)}, 500
+        finally:
+            cursor.close()
+            connection.close()
 
 # Add the resources to the API
 api.add_resource(CategoryResource, '/api/v2/categories')

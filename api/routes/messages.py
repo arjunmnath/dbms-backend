@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from api.models import db, Messages
-from sqlalchemy.exc import IntegrityError
+from api.models import create_connection
+from mysql.connector import Error
 from api.routes import api
 
 # Resource for managing messages
@@ -9,88 +9,122 @@ class MessagesResource(Resource):
     def post(self):
         """Send a new message."""
         data = request.get_json()
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            new_message = Messages(
-                sentTime=data['sentTime'],
-                readTime=data.get('readTime'),
-                messageContent=data['messageContent'],
-                productId=data.get('productId'),
-                sellerId=data['sellerId'],
-                receiverId=data['receiverId']
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                INSERT INTO messages (sentTime, readTime, messageContent, productId, sellerId, receiverId) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (data['sentTime'], data.get('readTime'), data['messageContent'], 
+                 data.get('productId'), data['sellerId'], data['receiverId'])
             )
-            db.session.add(new_message)
-            db.session.commit()
+            connection.commit()
             return jsonify({'message': 'Message sent successfully'}), 201
-        except IntegrityError:
-            db.session.rollback()
-            return jsonify({'error': 'Invalid data'}), 400
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+        except Error as e:
+            return jsonify({'error': str(e)}), 400
+        finally:
+            cursor.close()
+            connection.close()
 
 class UserMessagesResource(Resource):
     def get(self, user_id):
         """Fetch all messages for a specific user (either sent or received)."""
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            messages = Messages.query.filter(
-                (Messages.sellerId == user_id) | (Messages.receiverId == user_id)
-            ).all()
-            messages_list = [
-                {
-                    'messageId': m.messageId,
-                    'sentTime': m.sentTime.isoformat(),
-                    'readTime': m.readTime.isoformat() if m.readTime else None,
-                    'messageContent': m.messageContent,
-                    'productId': m.productId,
-                    'sellerId': m.sellerId,
-                    'receiverId': m.receiverId
-                } for m in messages
-            ]
-            return jsonify(messages_list)
-        except Exception as e:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT * FROM messages 
+                WHERE sellerId = %s OR receiverId = %s
+                """,
+                (user_id, user_id)
+            )
+            messages = cursor.fetchall()
+            return jsonify(messages), 200
+        except Error as e:
             return jsonify({'error': str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
 
 class MessageResource(Resource):
     def get(self, message_id):
         """Fetch a single message by its ID."""
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            message = Messages.query.get_or_404(message_id)
-            message_data = {
-                'messageId': message.messageId,
-                'sentTime': message.sentTime.isoformat(),
-                'readTime': message.readTime.isoformat() if message.readTime else None,
-                'messageContent': message.messageContent,
-                'productId': message.productId,
-                'sellerId': message.sellerId,
-                'receiverId': message.receiverId
-            }
-            return jsonify(message_data)
-        except Exception as e:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT * FROM messages WHERE messageId = %s", (message_id,)
+            )
+            message = cursor.fetchone()
+            if not message:
+                return {'error': 'Message not found'}, 404
+            
+            return jsonify(message), 200
+        except Error as e:
             return jsonify({'error': str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
 
     def put(self, message_id):
         """Update a message's read time or content."""
         data = request.get_json()
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            message = Messages.query.get_or_404(message_id)
-            message.readTime = data.get('readTime', message.readTime)
-            message.messageContent = data.get('messageContent', message.messageContent)
-            db.session.commit()
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                UPDATE messages 
+                SET readTime = %s, messageContent = %s 
+                WHERE messageId = %s
+                """,
+                (data.get('readTime'), data.get('messageContent'), message_id)
+            )
+            connection.commit()
+            if cursor.rowcount == 0:
+                return {'error': 'Message not found'}, 404
+            
             return jsonify({'message': 'Message updated successfully'}), 200
-        except IntegrityError:
-            db.session.rollback()
-            return jsonify({'error': 'Invalid data'}), 400
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+        except Error as e:
+            return jsonify({'error': str(e)}), 400
+        finally:
+            cursor.close()
+            connection.close()
 
     def delete(self, message_id):
         """Delete a message by its ID."""
+        connection = create_connection()
+        if not connection:
+            return {'error': 'Database connection failed'}, 500
+        
         try:
-            message = Messages.query.get_or_404(message_id)
-            db.session.delete(message)
-            db.session.commit()
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM messages WHERE messageId = %s", (message_id,))
+            connection.commit()
+            if cursor.rowcount == 0:
+                return {'error': 'Message not found'}, 404
+            
             return jsonify({'message': 'Message deleted successfully'}), 200
-        except Exception as e:
+        except Error as e:
             return jsonify({'error': str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
 
 # Register the resources with the API
 api.add_resource(MessagesResource, '/api/v2/messages')
