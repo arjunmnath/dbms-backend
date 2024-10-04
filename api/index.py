@@ -6,7 +6,7 @@ from api.models import create_tables
 app = Flask(__name__)
 
 # Set configurations
-app.config['DB_URI'] = os.environ.get('DB_URI')  # MySQL database URI
+app.config['DB_URI'] = os.environ.get('DB_URI')
 app.config['SECRET_KEY'] = os.urandom(24)
 
 try:
