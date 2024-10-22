@@ -311,6 +311,125 @@ class TrendingProducts(Resource):
             cursor.close()
             conn.close()
 
+class LHTProducts(Resource):
+    def get(self):
+        conn, cursor = None, None  # Initialize outside try block
+        try:
+            conn = create_connection()  # Create connection
+            cursor = conn.cursor(dictionary=True)  # Create cursor
+
+            # Prepare the response
+            response = []
+
+            # Helper function to fetch images for a product
+            def fetch_images(product_id):
+                cursor.execute("SELECT imageURL FROM Product_img WHERE productId = %s", (product_id,))
+                return [{'imageURL': img['imageURL']} for img in cursor.fetchall()]
+
+            # Fetch Trending Products
+            trending_query = """
+                SELECT p.*, COUNT(b.bidId) AS bid_count
+                FROM Product p
+                LEFT JOIN Bid b ON p.productId = b.productId
+                GROUP BY p.productId
+                ORDER BY bid_count DESC
+                LIMIT 10
+            """
+            cursor.execute(trending_query)
+            trending_products = cursor.fetchall()
+
+            trending_sub = []
+            for product in trending_products:
+                images = fetch_images(product['productId'])
+                trending_sub.append({
+                    'productId': product['productId'],
+                    'title': product['title'],
+                    'description': product['description'],
+                    'bid_count': product['bid_count'],
+                    'currentBidPrice': float(product['currentBidPrice']) if product['currentBidPrice'] is not None else None,
+                    'condition': product['condition'],
+                    'status': product['status'],
+                    'startTime': product['startTime'].isoformat() if product['startTime'] else None,
+                    'endTime': product['endTime'].isoformat() if product['endTime'] else None,
+                    'userId': product['userId'],
+                    'images': images
+                })
+
+            response.append({'trending': trending_sub})
+
+            # Fetch Products with Highest Bids
+            high_bid_query = """
+                SELECT p.*, MAX(b.bidAmount) AS highest_bid
+                FROM Product p
+                LEFT JOIN Bid b ON p.productId = b.productId
+                GROUP BY p.productId
+                ORDER BY highest_bid DESC
+                LIMIT 8
+            """
+            cursor.execute(high_bid_query)
+            high_bid_products = cursor.fetchall()
+
+            high_bid_sub = []
+            for product in high_bid_products:
+                images = fetch_images(product['productId'])
+                high_bid_sub.append({
+                    'productId': product['productId'],
+                    'title': product['title'],
+                    'description': product['description'],
+                    'highest_bid': float(product['highest_bid']) if product['highest_bid'] is not None else None,
+                    'currentBidPrice': float(product['currentBidPrice']) if product['currentBidPrice'] is not None else None,
+                    'condition': product['condition'],
+                    'status': product['status'],
+                    'startTime': product['startTime'].isoformat() if product['startTime'] else None,
+                    'endTime': product['endTime'].isoformat() if product['endTime'] else None,
+                    'userId': product['userId'],
+                    'images': images
+                })
+
+            response.append({'highBids': high_bid_sub})
+
+            # Fetch Live Auctions
+            live_auction_query = """
+                SELECT *
+                FROM Product
+                WHERE status = 'live'
+                ORDER BY startTime
+                LIMIT 10
+            """
+            cursor.execute(live_auction_query)
+            live_auction_products = cursor.fetchall()
+
+            live_sub = []
+            for product in live_auction_products:
+                images = fetch_images(product['productId'])
+                live_sub.append({
+                    'productId': product['productId'],
+                    'title': product['title'],
+                    'description': product['description'],
+                    'currentBidPrice': float(product['currentBidPrice']) if product['currentBidPrice'] is not None else None,
+                    'condition': product['condition'],
+                    'status': product['status'],
+                    'startTime': product['startTime'].isoformat() if product['startTime'] else None,
+                    'endTime': product['endTime'].isoformat() if product['endTime'] else None,
+                    'userId': product['userId'],
+                    'images': images
+                })
+
+            response.append({'live': live_sub})
+
+            return response, 200
+
+        except Error as e:
+            return {'error': str(e)}, 500
+        except Exception as e:
+            return {'error': str(e)}, 500
+        finally:
+            # Ensure cursor and connection are closed if they were created
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
 # Register resources with the API
 api.add_resource(ProductResource, '/api/v2/products/product')   #id
 api.add_resource(ProductListResource, '/api/v2/products')   #status,limit for getting list of products of specified status
@@ -318,3 +437,4 @@ api.add_resource(ProductCreateResource, '/api/v2/products/create')    #POST for 
 api.add_resource(CategoryProductsResource, '/api/v2/categories/products')   #categoryId, sortBy=currentBidPrice, sortOrder=desc (default asc)
                                                                             #limit, status
 api.add_resource(TrendingProducts, '/api/v2/products/trending')    #limit
+api.add_resource(LHTProducts, '/api/products/lht')

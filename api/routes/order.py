@@ -4,12 +4,6 @@ from api.models import create_connection
 from mysql.connector import Error
 from api.routes import api
 
-from flask import request, jsonify
-from flask_restful import Resource
-from mysql.connector import Error
-from api.models import create_connection  # Adjust the import based on your file structure
-from api.routes import api
-
 # Resource for managing user orders
 class UserOrdersResource(Resource):
     def get(self, user_id):

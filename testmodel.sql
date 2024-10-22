@@ -1,37 +1,9 @@
-import mysql.connector
-import os
-from dotenv import load_dotenv
-
-# Function to create a connection to the MySQL database
-def create_connection():
-    try:
-        load_dotenv()
-        conn = mysql.connector.connect(
-            host=os.getenv('DB_HOST'),
-            port=os.getenv('DB_PORT'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASS'),
-            database=os.getenv('DB_NAME')
-        )
-        return conn
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return None
-
-def create_tables():
-    try:
-        connection = create_connection()
-        cursor = connection.cursor()
-        
-        queries = [
-            '''
-            CREATE TABLE IF NOT EXISTS Category (
+use webauction;
+CREATE TABLE IF NOT EXISTS Category (
                 categoryId INT AUTO_INCREMENT PRIMARY KEY,
                 categoryName VARCHAR(255) NOT NULL
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS User (
+            );
+CREATE TABLE IF NOT EXISTS User (
                 userId INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(255) NOT NULL,
                 phone VARCHAR(15),
@@ -45,10 +17,8 @@ def create_tables():
                 pincode VARCHAR(10),
                 dateJoined DATETIME NOT NULL,
                 isVerified BOOLEAN DEFAULT FALSE
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Product (
+            );
+CREATE TABLE IF NOT EXISTS Product (
                 productId INT AUTO_INCREMENT PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
@@ -60,27 +30,21 @@ def create_tables():
                 endTime DATETIME NOT NULL,
                 userId INT,
                 FOREIGN KEY (userId) REFERENCES User(userId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Product_img (
+            );
+CREATE TABLE IF NOT EXISTS Product_img (
                 imageId INT AUTO_INCREMENT PRIMARY KEY,
                 productId INT,
                 imageURL VARCHAR(255) NOT NULL,
                 FOREIGN KEY (productId) REFERENCES Product(productId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Cat_Prod (
+            );
+CREATE TABLE IF NOT EXISTS Cat_Prod (
                 categoryId INT,
                 productId INT,
                 PRIMARY KEY (categoryId, productId),
                 FOREIGN KEY (categoryId) REFERENCES Category(categoryId),
                 FOREIGN KEY (productId) REFERENCES Product(productId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Bid (
+            );
+CREATE TABLE IF NOT EXISTS Bid (
                 bidId INT AUTO_INCREMENT PRIMARY KEY,
                 bidAmount DECIMAL(10, 2) NOT NULL,
                 bidTime DATETIME NOT NULL,
@@ -89,10 +53,8 @@ def create_tables():
                 productId INT,
                 FOREIGN KEY (userId) REFERENCES User(userId),
                 FOREIGN KEY (productId) REFERENCES Product(productId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS `Order` (
+            );
+CREATE TABLE IF NOT EXISTS `Order` (
                 orderId INT AUTO_INCREMENT PRIMARY KEY,
                 orderDate DATETIME NOT NULL,
                 orderStatus ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled') NOT NULL,
@@ -105,10 +67,8 @@ def create_tables():
                 productId INT,
                 FOREIGN KEY (userId) REFERENCES User(userId),
                 FOREIGN KEY (productId) REFERENCES Product(productId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Shipment (
+            );
+CREATE TABLE IF NOT EXISTS Shipment (
                 shippingId INT AUTO_INCREMENT PRIMARY KEY,
                 shippingMethod VARCHAR(255) NOT NULL,
                 trackingNumber VARCHAR(255),
@@ -122,10 +82,8 @@ def create_tables():
                 pincode VARCHAR(10) NOT NULL,
                 orderId INT,
                 FOREIGN KEY (orderId) REFERENCES `Order`(orderId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Review (
+            );
+CREATE TABLE IF NOT EXISTS Review (
                 reviewId INT AUTO_INCREMENT PRIMARY KEY,
                 rating INT NOT NULL,
                 comment TEXT,
@@ -134,10 +92,8 @@ def create_tables():
                 userId INT,
                 FOREIGN KEY (productId) REFERENCES Product(productId),
                 FOREIGN KEY (userId) REFERENCES User(userId)
-            )
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS Messages (
+            );
+CREATE TABLE IF NOT EXISTS Messages (
                 messageId INT AUTO_INCREMENT PRIMARY KEY,
                 sentTime DATETIME NOT NULL,
                 readTime DATETIME,
@@ -148,19 +104,4 @@ def create_tables():
                 FOREIGN KEY (productId) REFERENCES Product(productId),
                 FOREIGN KEY (sellerId) REFERENCES User(userId),
                 FOREIGN KEY (receiverId) REFERENCES User(userId)
-            )
-            '''
-        ]
-
-        for query in queries:
-            cursor.execute(query)
-
-        connection.commit()
-    
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return None
-    
-    finally:
-        cursor.close()
-        connection.close()
+            );

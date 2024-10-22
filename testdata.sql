@@ -27,16 +27,16 @@ VALUES
 
 INSERT INTO Product (title, `description`, `condition`, initialBid, currentBidPrice, `status`, startTime, endTime, userId)
 VALUES
-('Smartphone', 'A brand new smartphone with 128GB storage.', 'new', 299.99, 350.00, 'active', '2023-09-01 10:00:00', '2023-09-10 10:00:00', 1),
-('Laptop', 'Used laptop in good condition, 8GB RAM, 256GB SSD.', 'used', 499.99, 550.00, 'active', '2023-09-02 11:00:00', '2023-09-12 11:00:00', 2),
-('Gaming Console', 'Refurbished gaming console with 1TB storage.', 'refurbished', 199.99, 220.00, 'sold', '2023-09-03 12:00:00', '2023-09-13 12:00:00', 3),
-('Headphones', 'Brand new wireless headphones with noise cancellation.', 'new', 99.99, 120.00, 'expired', '2023-09-04 13:00:00', '2023-09-14 13:00:00', 4),
-('Bookshelf', 'Used wooden bookshelf, 5 shelves.', 'used', 59.99, 70.00, 'active', '2023-09-05 14:00:00', '2023-09-15 14:00:00', 5),
-('Digital Camera', 'Refurbished digital camera with 24MP resolution.', 'refurbished', 299.99, 320.00, 'sold', '2023-09-06 15:00:00', '2023-09-16 15:00:00', 6),
-('Coffee Maker', 'New coffee maker with programmable settings.', 'new', 49.99, 60.00, 'expired', '2023-09-07 16:00:00', '2023-09-17 16:00:00', 7),
-('Bicycle', 'Used mountain bike in good condition.', 'used', 149.99, 170.00, 'active', '2023-09-08 17:00:00', '2023-09-18 17:00:00', 8),
-('Smartwatch', 'Refurbished smartwatch with heart rate monitor.', 'refurbished', 129.99, 150.00, 'sold', '2023-09-09 18:00:00', '2023-09-19 18:00:00', 9),
-('Office Chair', 'New ergonomic office chair with lumbar support.', 'new', 89.99, 110.00, 'active', '2023-09-10 19:00:00', '2023-09-20 19:00:00', 10);
+('Smartphone', 'A brand new smartphone with 128GB storage.', 'new', 299.99, 350.00, 'live', '2023-09-01 10:00:00', '2023-09-10 10:00:00', 1),
+('Laptop', 'Used laptop in good condition, 8GB RAM, 256GB SSD.', 'used', 499.99, 550.00, 'live', '2023-09-02 11:00:00', '2023-09-12 11:00:00', 2),
+('Gaming Console', 'Refurbished gaming console with 1TB storage.', 'refurbished', 199.99, 220.00, 'live', '2023-09-03 12:00:00', '2023-09-13 12:00:00', 3),
+('Headphones', 'Brand new wireless headphones with noise cancellation.', 'new', 99.99, 120.00, 'live', '2023-09-04 13:00:00', '2023-09-14 13:00:00', 4),
+('Bookshelf', 'Used wooden bookshelf, 5 shelves.', 'used', 59.99, 70.00, 'live', '2023-09-05 14:00:00', '2023-09-15 14:00:00', 5),
+('Digital Camera', 'Refurbished digital camera with 24MP resolution.', 'refurbished', 299.99, 320.00, 'live', '2023-09-06 15:00:00', '2023-09-16 15:00:00', 6),
+('Coffee Maker', 'New coffee maker with programmable settings.', 'new', 49.99, 60.00, 'live', '2023-09-07 16:00:00', '2023-09-17 16:00:00', 7),
+('Bicycle', 'Used mountain bike in good condition.', 'used', 149.99, 170.00, 'live', '2023-09-08 17:00:00', '2023-09-18 17:00:00', 8),
+('Smartwatch', 'Refurbished smartwatch with heart rate monitor.', 'refurbished', 129.99, 150.00, 'live', '2023-09-09 18:00:00', '2023-09-19 18:00:00', 9),
+('Office Chair', 'New ergonomic office chair with lumbar support.', 'new', 89.99, 110.00, 'live', '2023-09-10 19:00:00', '2023-09-20 19:00:00', 10);
 
 INSERT INTO Bid (bidAmount, bidTime, isWinningBid, userId, productId)
 VALUES
