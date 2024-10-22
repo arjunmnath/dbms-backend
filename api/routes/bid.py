@@ -1,8 +1,8 @@
 from flask import request, jsonify
 from flask_restful import Resource
+from mysql.connector import Error
 from api.models import create_connection
 from api.routes import api
-from mysql.connector import Error
 
 class BidResource(Resource):
     def post(self):

@@ -1,8 +1,9 @@
 from flask import request
 from flask_restful import Resource
+from mysql.connector import Error
 from api.routes import api
 from api.models import create_connection
-from mysql.connector import Error
+
 # Resource for managing a single product
 class ProductResource(Resource):
     def get(self):
